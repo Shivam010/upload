@@ -35,6 +35,6 @@ jobs:
         GCP_BASE_URL: ${{ secrets.GCP_BASE_URL }}
         S3_URL: ${{ secrets.S3_URL }}
         S3_BASE_URL: ${{ secrets.S3_BASE_URL }}
-        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         
