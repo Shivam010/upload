@@ -1,4 +1,10 @@
 # upload 
+[![Build](https://github.com/Shivam010/upload/actions/workflows/build.yml/badge.svg)](https://github.com/Shivam010/upload/actions/workflows/build.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Shivam010/upload?dropcache)](https://goreportcard.com/report/github.com/Shivam010/upload)
+[![Go Reference](https://pkg.go.dev/badge/github.com/Shivam010/upload)](https://pkg.go.dev/github.com/Shivam010/upload)
+[![License](https://img.shields.io/badge/license-MIT-mildgreen.svg)](https://github.com/Shivam010/upload/blob/master/LICENSE)
+[![GitHub release](https://img.shields.io/github/release/Shivam010/upload.svg)](https://github.com/Shivam010/upload/releases)
+
 Package upload provides an easy and portable way to interact with CDN, buckets or blobs within any cloud/local storage location. And provides methods to read or write or upload or delete files to blob storage on GCP, AWS, Azure, in-memory, local and more.
 
 It wraps `gocloud.dev/blob` (https://github.com/google/go-cloud/tree/master/blob) for further simplicity.
