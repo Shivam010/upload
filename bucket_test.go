@@ -127,6 +127,9 @@ func TestUpload(t *testing.T) {
 					continue
 				}
 				t.Log(bucket.Provider())
+				if bucket.Provider() == AmazonWebServices {
+					t.Skip("Credentials are removed")
+				}
 				// upload content
 				got, err := bucket.WriteAll(ctx, io.input, []byte(io.input))
 				if err != nil {
@@ -159,6 +162,9 @@ func TestUpload(t *testing.T) {
 			for _, io := range tt.ioList {
 				bucket := NewBucket(tt.bucket)
 				t.Log(bucket.Provider())
+				if bucket.Provider() == AmazonWebServices {
+					t.Skip("Credentials are removed")
+				}
 				// upload content
 				got, err := bucket.WriteAll(ctx, io.input, []byte(io.input))
 				if err != nil {
