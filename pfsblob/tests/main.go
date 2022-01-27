@@ -33,7 +33,7 @@ func main() {
 	HttpFileReadExample(buck)
 
 	// Wait infinitely
-	select {}
+	//select {}
 }
 
 func server(buck *upload.Bucket, port string) {
