@@ -37,4 +37,6 @@ jobs:
         S3_BASE_URL: ${{ secrets.S3_BASE_URL }}
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        
+
+    - name: Test pfsblob
+      run: go run github.com/Shivam010/upload/pfsblob/tests
