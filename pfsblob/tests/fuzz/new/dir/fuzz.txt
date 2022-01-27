@@ -1,0 +1,2 @@
+Writing in file: new/dir/fuzz.txt
+ link: http://localhost:8080/srv/new/dir/fuzz.txt

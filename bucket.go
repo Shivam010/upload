@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"strings"
 
+	pfs "github.com/Shivam010/upload/pfsblob"
 	"gocloud.dev/blob"
 	file "gocloud.dev/blob/fileblob"
 	gcs "gocloud.dev/blob/gcsblob"
@@ -22,6 +24,7 @@ const (
 	FileSystem
 	GoogleCloud
 	AmazonWebServices
+	ProxiedFileSystem
 )
 
 var ProviderName = map[Provider]string{
@@ -29,6 +32,7 @@ var ProviderName = map[Provider]string{
 	FileSystem:        "Local File System",
 	GoogleCloud:       "Google Cloud Console",
 	AmazonWebServices: "Amazon Web Services",
+	ProxiedFileSystem: "Proxied File System",
 }
 
 func (p Provider) String() string {
@@ -38,14 +42,14 @@ func (p Provider) String() string {
 type Bucket struct {
 	url      string
 	name     string
-	region   string
 	provider Provider
 	bucket   *blob.Bucket
+	metadata map[string]string
 }
 
 // NewBucket will return the blob bucket using the provided bucket url
 func NewBucket(bucket string) *Bucket {
-	b := &Bucket{url: bucket}
+	b := &Bucket{url: bucket, metadata: map[string]string{}}
 	b.parse()
 	return b
 }
@@ -85,7 +89,25 @@ func (b *Bucket) parse() {
 	case s3.Scheme:
 		b.provider = AmazonWebServices
 		b.name = u.Host
-		b.region = u.Query().Get("region")
+		b.metadata["region"] = u.Query().Get("region")
+	case pfs.Scheme:
+		b.provider = ProxiedFileSystem
+		// storage directory of the file system
+		b.metadata["storage"] = u.Path
+		// listening route region
+		route := strings.Trim(u.Query().Get("route"), "/")
+		b.metadata["route"] = route
+
+		// name of the bucket (for the link purposes)
+		b.name = "http://"
+		isSecure := u.Query().Get("secure")
+		if isSecure == "true" {
+			b.name = "https://"
+		}
+		b.name += u.Host
+		if route != "" {
+			b.name += "/" + route
+		}
 	default:
 		b.name = u.Host
 		b.url = mem.Scheme + "://" + b.name
@@ -98,9 +120,24 @@ func (b *Bucket) Provider() Provider {
 	return b.provider
 }
 
+// String implements stringer on Bucket
+func (b *Bucket) String() string {
+	return b.Provider().String() + " Bucket"
+}
+
 // Name returns name of the bucket
 func (b *Bucket) Name() string {
 	return b.name
+}
+
+// URL returns the url of the bucket
+func (b *Bucket) URL() string {
+	return b.url
+}
+
+// GetMetadata returns the value stored inside the key of the metadata of bucket
+func (b *Bucket) GetMetadata(key string) string {
+	return b.metadata[key]
 }
 
 // OpenContext opens a new bucket connection
@@ -156,7 +193,9 @@ func (b *Bucket) GetUrl(name string) string {
 	case GoogleCloud:
 		return fmt.Sprintf("https://storage.googleapis.com/%v/%v", b.name, name)
 	case AmazonWebServices:
-		return fmt.Sprintf("https://%v.s3.%v.amazonaws.com/%v", b.name, b.region, name)
+		return fmt.Sprintf("https://%v.s3.%v.amazonaws.com/%v", b.name, b.GetMetadata("region"), name)
+	case ProxiedFileSystem:
+		return b.name + "/" + name
 	}
 	return b.name + "/" + name
 }
@@ -172,7 +211,9 @@ func (b *Bucket) GetName(link string) string {
 	case GoogleCloud:
 		prefix = fmt.Sprintf("https://storage.googleapis.com/%v/", b.name)
 	case AmazonWebServices:
-		prefix = fmt.Sprintf("https://%v.s3.%v.amazonaws.com/", b.name, b.region)
+		prefix = fmt.Sprintf("https://%v.s3.%v.amazonaws.com/", b.name, b.GetMetadata("region"))
+	case ProxiedFileSystem:
+		prefix = b.name + "/"
 	}
 	if len(link) > len(prefix) {
 		return link[len(prefix):]

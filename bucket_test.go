@@ -47,11 +47,11 @@ func GetTestData(t *testing.T) []unitData {
 			ioList: []struct{ input, output string }{
 				{
 					input:  "number/one.in",
-					output: getenv("S3_BASE_URL", "https://name.s3.us-east-2.amazonaws.com/")+"number/one.in",
+					output: getenv("S3_BASE_URL", "https://name.s3.us-east-2.amazonaws.com/") + "number/one.in",
 				},
 				{
 					input:  "two",
-					output: getenv("S3_BASE_URL", "https://name.s3.us-east-2.amazonaws.com/")+"two",
+					output: getenv("S3_BASE_URL", "https://name.s3.us-east-2.amazonaws.com/") + "two",
 				},
 			},
 		},
@@ -61,11 +61,53 @@ func GetTestData(t *testing.T) []unitData {
 			ioList: []struct{ input, output string }{
 				{
 					input:  "number/one.in",
-					output: getenv("GCP_BASE_URL", "https://storage.googleapis.com/name/")+"number/one.in",
+					output: getenv("GCP_BASE_URL", "https://storage.googleapis.com/name/") + "number/one.in",
 				},
 				{
 					input:  "two",
-					output: getenv("GCP_BASE_URL", "https://storage.googleapis.com/name/")+"two",
+					output: getenv("GCP_BASE_URL", "https://storage.googleapis.com/name/") + "two",
+				},
+			},
+		},
+		{
+			name:   ProxiedFileSystem.String(),
+			bucket: "pfs://localhost:8080" + pwd() + "/bin?route=web/file/srv",
+			ioList: []struct{ input, output string }{
+				{
+					input:  "number/three.in",
+					output: "http://localhost:8080/web/file/srv/number/three.in",
+				},
+				{
+					input:  "four",
+					output: "http://localhost:8080/web/file/srv/four",
+				},
+			},
+		},
+		{
+			name:   ProxiedFileSystem.String() + " (Secure)",
+			bucket: "pfs://example.com" + pwd() + "/bin/?route=web/file/srv&secure=true",
+			ioList: []struct{ input, output string }{
+				{
+					input:  "number/three.in",
+					output: "https://example.com/web/file/srv/number/three.in",
+				},
+				{
+					input:  "four",
+					output: "https://example.com/web/file/srv/four",
+				},
+			},
+		},
+		{
+			name:   ProxiedFileSystem.String() + " (without route)",
+			bucket: "pfs://example.com" + pwd() + "/bin",
+			ioList: []struct{ input, output string }{
+				{
+					input:  "number/three.in",
+					output: "http://example.com/number/three.in",
+				},
+				{
+					input:  "four",
+					output: "http://example.com/four",
 				},
 			},
 		},
@@ -89,6 +131,7 @@ func TestUpload(t *testing.T) {
 				got, err := bucket.WriteAll(ctx, io.input, []byte(io.input))
 				if err != nil {
 					t.Errorf("WriteAll(%v), got: %v \n", io.input, err)
+					continue
 				}
 				if got != io.output {
 					t.Errorf("GetUrl(%v), got: %v want: %v \n", io.input, got, io.output)
@@ -97,6 +140,7 @@ func TestUpload(t *testing.T) {
 				con, err := bucket.ReadAll(ctx, bucket.GetName(io.output))
 				if err != nil {
 					t.Errorf("ReadAll(%v), got: %v \n", io.output, err)
+					continue
 				}
 				if string(con) != io.input {
 					t.Errorf("Content(%v), got: %s want: %v \n", io.output, con, io.input)
@@ -119,6 +163,7 @@ func TestUpload(t *testing.T) {
 				got, err := bucket.WriteAll(ctx, io.input, []byte(io.input))
 				if err != nil {
 					t.Errorf("WriteAll(%v), got: %v \n", io.input, err)
+					continue
 				}
 				if got != io.output {
 					t.Errorf("GetUrl(%v), got: %v want: %v \n", io.input, got, io.output)
@@ -127,6 +172,7 @@ func TestUpload(t *testing.T) {
 				r, err := bucket.Reader(ctx, bucket.GetName(io.output))
 				if err != nil {
 					t.Errorf("Reader(%v), got: %v \n", io.output, err)
+					continue
 				}
 				con, err := ioutil.ReadAll(r)
 				if err != nil {
@@ -134,7 +180,6 @@ func TestUpload(t *testing.T) {
 				}
 				if err := r.Close(); err != nil {
 					t.Errorf("Close(%v), got: %v \n", io.output, err)
-					return
 				}
 				if string(con) != io.input {
 					t.Errorf("Content(%v), got: %s want: %v \n", io.output, con, io.input)
